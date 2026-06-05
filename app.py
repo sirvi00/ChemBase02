@@ -105,7 +105,6 @@ div[data-testid="stToolbar"] {
     font-family: 'Hanken Grotesk', sans-serif !important;
 }
 
-div[data-testid="stAppViewContainer"],
 div[data-testid="stAppViewBlockContainer"],
 div[data-testid="stMainBlockContainer"],
 div[data-testid="stVerticalBlock"],
@@ -289,7 +288,11 @@ button[data-testid="stBaseButton-tertiary"]:hover {
 
 LANDING_CSS = """
 <style>
+.stApp {
+    background-color: #001e32 !important;
+}
 div[data-testid="stAppViewContainer"] {
+    background-color: #001e32 !important;
     background-image: linear-gradient(rgba(0, 30, 50, 0.55), rgba(0, 30, 50, 0.55)), url('data:image/jpeg;base64,BG_IMAGE_BASE64') !important;
     background-size: cover !important;
     background-position: center !important;
@@ -309,7 +312,11 @@ div[data-testid="stMainBlockContainer"] {
 
 SEARCH_CSS = """
 <style>
+.stApp {
+    background-color: #f9f9fc !important;
+}
 div[data-testid="stAppViewContainer"] {
+    background-color: #f9f9fc !important;
     background-image: linear-gradient(rgba(249, 249, 252, 0.9), rgba(249, 249, 252, 0.9)), url('data:image/jpeg;base64,BG_IMAGE_BASE64') !important;
     background-size: cover !important;
     background-position: center !important;
