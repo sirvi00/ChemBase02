@@ -12,7 +12,9 @@ def get_base64_image(path):
         return base64.b64encode(data).decode("utf-8")
     return ""
 
-bg_base64 = get_base64_image("static/assets/background_search.jpeg")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+bg_path = os.path.join(BASE_DIR, "static", "assets", "background_search.jpeg")
+bg_base64 = get_base64_image(bg_path)
 
 st.set_page_config(
     page_title="Chemical Safety Database",
@@ -40,14 +42,12 @@ def get_hazard_class(hz):
         return "chip-eksplosif"
     return "chip-neutral"
 
-
 def build_chips_html(hazards, font_size="10px"):
     chips = ""
     for h in hazards:
         cls = get_hazard_class(h)
         chips += f'<span class="chip {cls}" style="font-size:{font_size}">{h}</span>'
     return f'<div class="chips-wrapper">{chips}</div>'
-
 
 def build_card_html(compound):
     chips = build_chips_html(compound["hazards"])
@@ -327,7 +327,6 @@ div[data-testid="stMainBlockContainer"] {
 </style>
 """
 
-
 @st.dialog("Detail Zat Kimia", width="large")
 def show_detail(compound_id):
     compound = next((c for c in compounds_data if c["id"] == compound_id), None)
@@ -345,7 +344,7 @@ def show_detail(compound_id):
 
     rumus = compound.get("rumusBangun", "")
     if rumus:
-        img_path = os.path.join("static", rumus)
+        img_path = os.path.join(BASE_DIR, "static", rumus)
         img_base64 = get_base64_image(img_path)
         ext = rumus.split(".")[-1].lower()
         mime = "image/png" if ext == "png" else "image/jpeg"
