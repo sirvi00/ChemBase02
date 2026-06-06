@@ -485,7 +485,6 @@ def main():
             unsafe_allow_html=True,
         )
 
-        # Tampilkan input pencarian (text input) di kolom tengah
         left_col, center_col, right_col = st.columns([1.2, 2, 1.2])
         with center_col:
             st.text_input(
@@ -494,18 +493,37 @@ def main():
                 key="q",
                 label_visibility="collapsed",
             )
-
-        # Tampilkan informasi jumlah total zat kimia yang terdaftar
-        st.markdown(
-            '<p style="'
-            "font-family:'Hanken Grotesk',sans-serif;"
-            'font-size:13px;color:rgba(255,255,255,0.8);'
-            'margin:10px 0 0 0;text-align:center;'
-            '"><strong style="color:#fff;font-weight:600">'
-            + str(len(compounds_data))
-            + "</strong> zat kimia tersedia</p>",
-            unsafe_allow_html=True,
-        )
+            # Tampilkan informasi jumlah total zat kimia yang terdaftar
+            html_content = (
+                '<div style="display: flex; flex-direction: column; align-items: center; width: 100%;">'
+                '<p style="'
+                "font-family:'Hanken Grotesk',sans-serif;"
+                'font-size:15px;color:rgba(255,255,255,0.85);'
+                'margin:10px 0 0 0;text-align:center;'
+                '"><strong style="color:#fff;font-weight:600">'
+                + str(len(compounds_data))
+                + "</strong> zat kimia tersedia</p>"
+                '<p style="'
+                "font-family:'Hanken Grotesk',sans-serif;"
+                'font-size:15px;color:rgba(255,255,255,0.85);'
+                'margin:10px 0 0 0;text-align:center;'
+                '"><strong style="color:#fff;font-weight:600">'
+                + "</strong> Disusun oleh:</p>"
+                '<ul style="'
+                "list-style-type:none;padding:0;margin:12px 0 0 0;"
+                "font-family:'Hanken Grotesk',sans-serif;"
+                'font-size:16px;color:rgba(255,255,255,0.75);'
+                'text-align:left;display:inline-block;'
+                '">'
+                '<li style="margin-bottom:6px;">1. Fauziah Hasanah</li>'
+                '<li style="margin-bottom:6px;">2. Nabila Agustin</li>'
+                '<li style="margin-bottom:6px;">3. Sarah Siti Shalsabila</li>'
+                '<li style="margin-bottom:6px;">4. Sirvi Fauziah</li>'
+                '<li style="margin-bottom:6px;">5. Sukma Widad Alhana</li>'
+                '</ul>'
+                '</div>'
+            )
+            st.markdown(html_content, unsafe_allow_html=True)
 
     # 4. Alur Tampilan Hasil Pencarian (Jika query pencarian terisi)
     else:
