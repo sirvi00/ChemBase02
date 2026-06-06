@@ -5,6 +5,7 @@ import base64
 import os
 from data import compounds_data
 
+# konversi file gambar lokal menjadi string base64 untuk disematkan ke dalam tag HTML
 def get_base64_image(path):
     if os.path.exists(path):
         with open(path, "rb") as f:
@@ -16,6 +17,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 bg_path = os.path.join(BASE_DIR, "static", "assets", "background_search.jpeg")
 bg_base64 = get_base64_image(bg_path)
 
+# Mengatur tampilan halaman web di Streamlit (judul, ikon, tata letak)
 st.set_page_config(
     page_title="Chemical Safety Database",
     page_icon="🧪",
@@ -24,6 +26,7 @@ st.set_page_config(
 )
 
 
+# Menentukan kelas CSS (warna chip) berdasarkan kata kunci sifat bahaya zat kimia
 def get_hazard_class(hz):
     low = hz.lower()
     if "korosif" in low:
@@ -42,6 +45,7 @@ def get_hazard_class(hz):
         return "chip-eksplosif"
     return "chip-neutral"
 
+# Membuat elemen HTML berupa chip/tag penanda sifat bahaya zat kimia
 def build_chips_html(hazards, font_size="10px"):
     chips = ""
     for h in hazards:
@@ -49,6 +53,7 @@ def build_chips_html(hazards, font_size="10px"):
         chips += f'<span class="chip {cls}" style="font-size:{font_size}">{h}</span>'
     return f'<div class="chips-wrapper">{chips}</div>'
 
+# Menyusun struktur HTML kartu (card) ringkasan zat kimia untuk halaman pencarian
 def build_card_html(compound):
     chips = build_chips_html(compound["hazards"])
     return f'''<div class="chem-card">
@@ -62,18 +67,9 @@ def build_card_html(compound):
     </div>
     {chips}
   </div>
-</div>'''
+</div>'''   
 
-
-def build_msds_block(title, content, color):
-    return (
-        f'<div class="msds-block" style="background:{color}0F;border-left:4px solid {color};">'
-        f'<div class="msds-block-title" style="color:{color}">{title}</div>'
-        f'<div class="msds-block-content">{content}</div>'
-        f'</div>'
-    )
-
-
+# Memfilter daftar zat kimia berdasarkan kecocokan query pencarian pada nama, rumus, atau bahaya
 def filter_data(query):
     if not query:
         return []
@@ -85,7 +81,15 @@ def filter_data(query):
         or any(q in h.lower() for h in c["hazards"])
     ]
 
-
+# Gaya CSS global (ALL_CSS) mencakup:
+# - Font eksternal (Hanken Grotesk & JetBrains Mono)
+# - Penyembunyian elemen default Streamlit (header, footer, decoration, dll.)
+# - Tata letak dan kustomisasi input text pencarian beserta ikon search
+# - Gaya visual untuk chip bahaya, kartu zat kimia (chem-card beserta efek hover-nya)
+# - Gaya button sekunder/tertiary Streamlit
+# - Komponen modal detail (nama, rumus, grid properti, blok MSDS, dan tombol link)
+# - Tata letak gambar rumus bangun (struktur molekul)
+# - Tampilan halaman kosong (search-empty) ketika data tidak ditemukan
 ALL_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
@@ -286,6 +290,10 @@ button[data-testid="stBaseButton-tertiary"]:hover {
 </style>
 """
 
+# Gaya CSS Landing Page (LANDING_CSS) mencakup:
+# - Background halaman utama dengan warna gelap (#001e32)
+# - Gambar latar belakang landing page dengan efek linear-gradient overlay
+# - Penyesuaian padding dan lebar maksimum container utama (1200px) agar terpusat
 LANDING_CSS = """
 <style>
 .stApp {
@@ -310,6 +318,10 @@ div[data-testid="stMainBlockContainer"] {
 </style>
 """
 
+# Gaya CSS Halaman Pencarian (SEARCH_CSS) mencakup:
+# - Background halaman hasil pencarian dengan warna terang (#f9f9fc)
+# - Gambar latar belakang yang diperjelas/diterangkan menggunakan linear-gradient overlay putih dominan
+# - Penyesuaian padding bawah dan lebar maksimum container utama agar rapi saat menampilkan hasil
 SEARCH_CSS = """
 <style>
 .stApp {
@@ -334,13 +346,16 @@ div[data-testid="stMainBlockContainer"] {
 </style>
 """
 
+# Menampilkan modal dialog detail zat kimia berdasarkan ID yang dipilih
 @st.dialog("Detail Zat Kimia", width="large")
 def show_detail(compound_id):
+    # 1. Cari data zat kimia berdasarkan ID, tampilkan error jika tidak ada
     compound = next((c for c in compounds_data if c["id"] == compound_id), None)
     if not compound:
         st.error("Data tidak ditemukan")
         return
 
+    # 2. Tampilkan nama dan rumus kimia utama di bagian atas modal
     st.markdown(
         f'<div style="margin-bottom:16px">'
         f'<div class="modal-formula">{compound["formula"]}</div>'
@@ -349,6 +364,7 @@ def show_detail(compound_id):
         unsafe_allow_html=True,
     )
 
+    # 3. Tampilkan gambar rumus bangun/struktur molekul jika tersedia
     rumus = compound.get("rumusBangun", "")
     if rumus:
         img_path = os.path.join(BASE_DIR, "static", rumus)
@@ -364,6 +380,7 @@ def show_detail(compound_id):
             unsafe_allow_html=True,
         )
 
+    # 4. Tampilkan grid informasi detail (rumus kimia dan warna/wujud)
     st.markdown(
         f'<div style="margin-bottom:16px"><div class="stat-grid">'
         f'<div class="stat-cell">'
@@ -378,6 +395,7 @@ def show_detail(compound_id):
         unsafe_allow_html=True,
     )
 
+    # 5. Tampilkan daftar sifat bahaya dengan bentuk chip warna-warni
     chips = build_chips_html(compound["hazards"], "11px")
     st.markdown(
         f'<div style="margin-bottom:16px">'
@@ -386,53 +404,34 @@ def show_detail(compound_id):
         unsafe_allow_html=True,
     )
 
+    # 6. Tampilkan tombol link ke dokumen MSDS (PDF) jika tersedia
     st.markdown(
         '<div class="label-caps" style="color:#1a1c1e;margin-bottom:12px">'
         'Keselamatan &amp; Penanganan (MSDS)</div>',
         unsafe_allow_html=True,
     )
 
-    msds = compound.get("msds") or {}
+    msds = compound.get("msds") or {}  
     has_link = bool(msds.get("link"))
-    has_fields = bool(
-        msds.get("penanganan") or msds.get("penyimpanan")
-        or msds.get("p3k") or msds.get("pembuangan")
-    )
 
-    if has_link or has_fields:
-        parts = []
-        if has_link:
-            parts.append(
-                f'<a href="{msds["link"]}" target="_blank" rel="noopener noreferrer"'
-                f' class="msds-link-button" style="margin-bottom:12px">'
-                f'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"'
-                f' stroke="currentColor" stroke-width="2" stroke-linecap="round"'
-                f' stroke-linejoin="round">'
-                f'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>'
-                f'<polyline points="14 2 14 8 20 8"/>'
-                f'<line x1="16" y1="13" x2="8" y2="13"/>'
-                f'<line x1="16" y1="17" x2="8" y2="17"/></svg>'
-                f'<span>Lihat Dokumen MSDS (PDF)</span>'
-                f'<svg width="16" height="16" viewBox="0 0 24 24" fill="none"'
-                f' stroke="currentColor" stroke-width="2" stroke-linecap="round"'
-                f' stroke-linejoin="round">'
-                f'<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>'
-                f'<polyline points="15 3 21 3 21 9"/>'
-                f'<line x1="10" y1="14" x2="21" y2="3"/></svg></a>'
-            )
-        if msds.get("penanganan"):
-            parts.append(build_msds_block("Penanganan", msds["penanganan"], "#006591"))
-        if msds.get("penyimpanan"):
-            parts.append(build_msds_block("Penyimpanan", msds["penyimpanan"], "#006d37"))
-        if msds.get("p3k"):
-            parts.append(build_msds_block("P3K", msds["p3k"], "#ba1a1a"))
-        if msds.get("pembuangan"):
-            parts.append(build_msds_block("Pembuangan", msds["pembuangan"], "#3e4851"))
-
+    if has_link:
         st.markdown(
-            '<div style="display:flex;flex-direction:column;gap:12px">'
-            + "".join(parts)
-            + "</div>",
+            f'<a href="{msds["link"]}" target="_blank" rel="noopener noreferrer"'
+            f' class="msds-link-button" style="margin-bottom:12px">'
+            f'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"'
+            f' stroke="currentColor" stroke-width="2" stroke-linecap="round"'
+            f' stroke-linejoin="round">'
+            f'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>'
+            f'<polyline points="14 2 14 8 20 8"/>'
+            f'<line x1="16" y1="13" x2="8" y2="13"/>'
+            f'<line x1="16" y1="17" x2="8" y2="17"/></svg>'
+            f'<span>Lihat Dokumen MSDS (PDF)</span>'
+            f'<svg width="16" height="16" viewBox="0 0 24 24" fill="none"'
+            f' stroke="currentColor" stroke-width="2" stroke-linecap="round"'
+            f' stroke-linejoin="round">'
+            f'<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>'
+            f'<polyline points="15 3 21 3 21 9"/>'
+            f'<line x1="10" y1="14" x2="21" y2="3"/></svg></a>',
             unsafe_allow_html=True,
         )
     else:
@@ -444,20 +443,27 @@ def show_detail(compound_id):
         )
 
 
+# Fungsi utama untuk menjalankan aplikasi Streamlit
 def main():
+    # 1. Cek status pencarian di session state
     current_query = st.session_state.get("q", "").strip()
     is_searching = bool(current_query)
 
+    # 2. Muat style CSS global ke aplikasi
     st.markdown(ALL_CSS, unsafe_allow_html=True)
 
+    # 3. Alur Tampilan Landing Page (Jika belum melakukan pencarian)
     if not is_searching:
+        # Terapkan gaya visual CSS khusus untuk landing page
         st.markdown(LANDING_CSS.replace("BG_IMAGE_BASE64", bg_base64), unsafe_allow_html=True)
 
+        # Beri jarak vertikal agar konten berada di tengah vertikal
         st.markdown(
             '<div style="height:calc(50vh - 180px)"></div>',
             unsafe_allow_html=True,
         )
 
+        # Tampilkan judul utama aplikasi
         st.markdown(
             '<h1 style="'
             "font-family:'Hanken Grotesk',sans-serif;"
@@ -468,6 +474,7 @@ def main():
             unsafe_allow_html=True,
         )
 
+        # Tampilkan slogan/deskripsi singkat database
         st.markdown(
             '<p style="'
             "font-family:'Hanken Grotesk',sans-serif;"
@@ -478,6 +485,7 @@ def main():
             unsafe_allow_html=True,
         )
 
+        # Tampilkan input pencarian (text input) di kolom tengah
         left_col, center_col, right_col = st.columns([1.2, 2, 1.2])
         with center_col:
             st.text_input(
@@ -487,6 +495,7 @@ def main():
                 label_visibility="collapsed",
             )
 
+        # Tampilkan informasi jumlah total zat kimia yang terdaftar
         st.markdown(
             '<p style="'
             "font-family:'Hanken Grotesk',sans-serif;"
@@ -498,11 +507,15 @@ def main():
             unsafe_allow_html=True,
         )
 
+    # 4. Alur Tampilan Hasil Pencarian (Jika query pencarian terisi)
     else:
+        # Terapkan gaya visual CSS khusus untuk halaman hasil pencarian
         st.markdown(SEARCH_CSS.replace("BG_IMAGE_BASE64", bg_base64), unsafe_allow_html=True)
 
+        # Cari zat kimia yang cocok berdasarkan query
         filtered = filter_data(current_query)
 
+        # Tampilkan judul aplikasi berukuran kecil di bagian atas
         st.markdown(
             '<h1 style="'
             "font-family:'Hanken Grotesk',sans-serif;"
@@ -512,6 +525,7 @@ def main():
             unsafe_allow_html=True,
         )
 
+        # Tampilkan input pencarian agar pengguna bisa mencari ulang
         left_col, center_col, right_col = st.columns([1.2, 2, 1.2])
         with center_col:
             st.text_input(
@@ -521,6 +535,7 @@ def main():
                 label_visibility="collapsed",
             )
 
+        # Tampilkan statistik jumlah zat yang ditemukan dari total data
         st.markdown(
             '<p style="'
             "font-family:'Hanken Grotesk',sans-serif;"
@@ -533,6 +548,7 @@ def main():
             unsafe_allow_html=True,
         )
 
+        # Tampilkan empty state jika hasil pencarian nihil
         if not filtered:
             safe_query = html_mod.escape(current_query)
             st.markdown(
@@ -544,11 +560,13 @@ def main():
                 '</div></div>',
                 unsafe_allow_html=True,
             )
+        # Tampilkan kartu-kartu zat kimia yang cocok dalam grid 3 kolom
         else:
             cols = st.columns(3)
             for idx, compound in enumerate(filtered):
                 with cols[idx % 3]:
                     st.markdown(build_card_html(compound), unsafe_allow_html=True)
+                    # Tombol interaktif untuk menampilkan modal detail zat kimia
                     if st.button(
                         "Lihat Detail",
                         key=f"btn_{compound['id']}",
