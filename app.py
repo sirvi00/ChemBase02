@@ -514,7 +514,11 @@ def main():
             'font-size:15px;color:rgba(255,255,255,0.85);'
             'margin:0 0 28px 0;line-height:1.5;text-align:center;'
             'text-shadow:0 1px 4px rgba(0,0,0,0.2);'
-            '">1. Fauziah Hasanah,2. Nabila Agustin,3. Sarah Siti Shalsabila,4. Sirvi Fauziah,5. ⁠Sukma Widad Alhana</p>',
+            '">Disusun Oleh: 1. Fauziah Hasanah,
+            2. Nabila Agustin,
+            3. Sarah Siti Shalsabila,
+            4. Sirvi Fauziah,
+            5. ⁠Sukma Widad Alhana</p>',
             unsafe_allow_html=True,
         )
 
