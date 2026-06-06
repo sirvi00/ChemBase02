@@ -481,7 +481,7 @@ def main():
             'font-size:15px;color:rgba(255,255,255,0.85);'
             'margin:0 0 28px 0;line-height:1.5;text-align:center;'
             'text-shadow:0 1px 4px rgba(0,0,0,0.2);'
-            '">Cari informasi zat kimia, sifat bahaya, dan data MSDS</p>',
+            '">Cari informasi zat kimia, sifat bahaya, dan MSDS</p>',
             unsafe_allow_html=True,
         )
 
