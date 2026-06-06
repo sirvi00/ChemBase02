@@ -510,7 +510,7 @@ def main():
                 '"><strong style="color:#fff;font-weight:600">'
                 + "</strong> Disusun oleh:</p>"
                 '<ul style="'
-                "list-style-type:none;padding:0;margin:12px 0 0 0;"
+                "list-style-type:none;padding:0;margin:0px 0 0 0;"
                 "font-family:'Hanken Grotesk',sans-serif;"
                 'font-size:14px;color:rgba(255,255,255,0.75);'
                 'text-align:left;display:inline-block;'
