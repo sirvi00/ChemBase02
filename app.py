@@ -507,20 +507,28 @@ def main():
             unsafe_allow_html=True,
         )
 
-     # Tampilkan informasi anggota kelompok
-        st.markdown(
-            '<p style="'
-            "font-family:'Hanken Grotesk',sans-serif;"
-            'font-size:15px;color:rgba(255,255,255,0.85);'
-            'margin:0 0 28px 0;line-height:1.5;text-align:center;'
-            'text-shadow:0 1px 4px rgba(0,0,0,0.2);'
-            '">Disusun Oleh: 1. Fauziah Hasanah,
-            2. Nabila Agustin,
-            3. Sarah Siti Shalsabila,
-            4. Sirvi Fauziah,
-            5. ⁠Sukma Widad Alhana</p>',
-            unsafe_allow_html=True,
-        )
+    # Tampilkan informasi anggota kelompok
+st.markdown(
+    """
+    <p style="
+    font-family:'Hanken Grotesk',sans-serif;
+    font-size:15px;
+    color:rgba(255,255,255,0.85);
+    margin:0 0 28px 0;
+    line-height:1.5;
+    text-align:center;
+    text-shadow:0 1px 4px rgba(0,0,0,0.2);
+    ">
+    Disusun Oleh:<br>
+    1. Fauziah Hasanah<br>
+    2. Nabila Agustin<br>
+    3. Sarah Siti Shalsabila<br>
+    4. Sirvi Fauziah<br>
+    5. Sukma Widad Alhana
+    </p>
+    """,
+    unsafe_allow_html=True,
+)
 
     # 4. Alur Tampilan Hasil Pencarian (Jika query pencarian terisi)
     else:
