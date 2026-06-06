@@ -512,7 +512,7 @@ def main():
                 '<ul style="'
                 "list-style-type:none;padding:0;margin:12px 0 0 0;"
                 "font-family:'Hanken Grotesk',sans-serif;"
-                'font-size:16px;color:rgba(255,255,255,0.75);'
+                'font-size:14px;color:rgba(255,255,255,0.75);'
                 'text-align:left;display:inline-block;'
                 '">'
                 '<li style="margin-bottom:6px;">1. Fauziah Hasanah</li>'
