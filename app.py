@@ -499,14 +499,14 @@ def main():
                 '<p style="'
                 "font-family:'Hanken Grotesk',sans-serif;"
                 'font-size:15px;color:rgba(255,255,255,0.85);'
-                'margin:10px 0 0 0;text-align:center;'
+                'margin:4px 0 0 0;text-align:center;'
                 '"><strong style="color:#fff;font-weight:600">'
                 + str(len(compounds_data))
                 + "</strong> zat kimia tersedia</p>"
                 '<p style="'
                 "font-family:'Hanken Grotesk',sans-serif;"
                 'font-size:14px;color:rgba(255,255,255,0.85);'
-                'margin:8px 0 0 0;text-align:center;'
+                'margin:4px 0 0 0;text-align:center;'
                 '"><strong style="color:#fff;font-weight:600">'
                 + "</strong> Disusun oleh:</p>"
                 '<ul style="'
