@@ -503,24 +503,39 @@ def main():
                 '"><strong style="color:#fff;font-weight:600">'
                 + str(len(compounds_data))
                 + "</strong> zat kimia tersedia</p>"
+                '<div style="display: inline-block; text-align: left; margin-top: 15px; width: 330px;">'
                 '<p style="'
                 "font-family:'Hanken Grotesk',sans-serif;"
                 'font-size:15px;color:rgba(255,255,255,0.85);'
-                'margin:10px 0 0 0;text-align:center;'
-                '"><strong style="color:#fff;font-weight:600">'
-                + "</strong> Disusun oleh:</p>"
+                'margin:0;text-align:center;padding-left:10px;'
+                '">Disusun oleh:</p>'
                 '<ul style="'
-                "list-style-type:none;padding:0;margin:12px 0 0 0;"
+                "list-style-type:none;padding:0;margin:8px 0 0 0;"
                 "font-family:'Hanken Grotesk',sans-serif;"
                 'font-size:16px;color:rgba(255,255,255,0.75);'
-                'text-align:left;display:inline-block;'
                 '">'
-                '<li style="margin-bottom:6px;">1. Fauziah Hasanah</li>'
-                '<li style="margin-bottom:6px;">2. Nabila Agustin</li>'
-                '<li style="margin-bottom:6px;">3. Sarah Siti Shalsabila</li>'
-                '<li style="margin-bottom:6px;">4. Sirvi Fauziah</li>'
-                '<li style="margin-bottom:6px;">5. Sukma Widad Alhana</li>'
+                '<li style="display: flex; justify-content: space-between; margin-bottom: 6px;">'
+                '<span>1. Fauziah Hasanah</span>'
+                '<span style="font-family:\'JetBrains Mono\', monospace; font-size:14px; opacity:0.85;">(2530614)</span>'
+                '</li>'
+                '<li style="display: flex; justify-content: space-between; margin-bottom: 6px;">'
+                '<span>2. Nabila Agustin</span>'
+                '<span style="font-family:\'JetBrains Mono\', monospace; font-size:14px; opacity:0.85;">(2530641)</span>'
+                '</li>'
+                '<li style="display: flex; justify-content: space-between; margin-bottom: 6px;">'
+                '<span>3. Sarah Siti Shalsabila</span>'
+                '<span style="font-family:\'JetBrains Mono\', monospace; font-size:14px; opacity:0.85;">(2530651)</span>'
+                '</li>'
+                '<li style="display: flex; justify-content: space-between; margin-bottom: 6px;">'
+                '<span>4. Sirvi Fauziah</span>'
+                '<span style="font-family:\'JetBrains Mono\', monospace; font-size:14px; opacity:0.85;">(2530653)</span>'
+                '</li>'
+                '<li style="display: flex; justify-content: space-between; margin-bottom: 6px;">'
+                '<span>5. Sukma Widad Alhana</span>'
+                '<span style="font-family:\'JetBrains Mono\', monospace; font-size:14px; opacity:0.85;">(2530655)</span>'
+                '</li>'
                 '</ul>'
+                '</div>'
                 '</div>'
             )
             st.markdown(html_content, unsafe_allow_html=True)
