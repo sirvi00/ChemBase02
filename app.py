@@ -607,9 +607,851 @@ def main():
                         type="tertiary",
                     ):
                         show_detail(compound["id"])
+import html as html_mod
+import streamlit as st
+import streamlit.components.v1 as components
+import base64
+import os
+from data import compounds_data
 
-https://claude.ai/public/artifacts/0ceafd1d-81c0-41bb-99ff-07c11ed5cd9c
+# konversi file gambar lokal menjadi string base64 untuk disematkan ke dalam tag HTML
+def get_base64_image(path):
+    if os.path.exists(path):
+        with open(path, "rb") as f:
+            data = f.read()
+        return base64.b64encode(data).decode("utf-8")
+    return ""
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+bg_path = os.path.join(BASE_DIR, "static", "assets", "background_search.jpeg")
+bg_base64 = get_base64_image(bg_path)
+
+# Mengatur tampilan halaman web di Streamlit (judul, ikon, tata letak)
+st.set_page_config(
+    page_title="Chemical Safety Database",
+    page_icon="🧪",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+# Menentukan kelas CSS (warna chip) berdasarkan kata kunci sifat bahaya zat kimia
+def get_hazard_class(hz):
+    low = hz.lower()
+    if "korosif" in low:
+        return "chip-korosif"
+    if "terbakar" in low:
+        return "chip-terbakar"
+    if "oksidator" in low:
+        return "chip-oksidator"
+    if "beracun" in low or "toksik" in low:
+        return "chip-toksik"
+    if "iritan" in low or "iritasi" in low:
+        return "chip-iritan"
+    if "karsinogenik" in low or "karsinogen" in low:
+        return "chip-karsinogenik"
+    if "eksplosif" in low or "meledak" in low:
+        return "chip-eksplosif"
+    return "chip-neutral"
+
+# Membuat elemen HTML berupa chip/tag penanda sifat bahaya zat kimia
+def build_chips_html(hazards, font_size="10px"):
+    chips = ""
+    for h in hazards:
+        cls = get_hazard_class(h)
+        chips += f'<span class="chip {cls}" style="font-size:{font_size}">{h}</span>'
+    return f'<div class="chips-wrapper">{chips}</div>'
+
+# Menyusun struktur HTML kartu (card) ringkasan zat kimia untuk halaman pencarian
+def build_card_html(compound):
+    chips = build_chips_html(compound["hazards"])
+    return f'''<div class="chem-card">
+<div class="card-top-strip"></div>
+<div class="card-body">
+  <div class="card-name">{compound["name"]}</div>
+  <div><span class="formula-tag">{compound["formula"]}</span></div>
+  <div class="card-divider">
+    <div class="label-caps">Warna / Wujud</div>
+    <div class="card-wujud">{compound["wujud"]}</div>
+  </div>
+  {chips}
+</div>
+</div>'''
+
+# Memfilter daftar zat kimia berdasarkan kecocokan query pencarian pada nama, rumus, atau bahaya
+def filter_data(query):
+    if not query:
+        return []
+    q = query.lower()
+    return [
+        c for c in compounds_data
+        if q in c["name"].lower()
+        or q in c["formula"].lower()
+        or any(q in h.lower() for h in c["hazards"])
+    ]
+
+# ─── CSS GLOBAL ────────────────────────────────────────────────────────────────
+ALL_CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+header, footer, .stDeployButton,
+div[data-testid="stDecoration"],
+div[data-testid="stStatusWidget"],
+div[data-testid="stToolbar"] {
+  visibility: hidden !important;
+  height: 0px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  position: fixed !important;
+}
+
+.stApp {
+  font-family: 'Hanken Grotesk', sans-serif !important;
+}
+
+div[data-testid="stAppViewBlockContainer"],
+div[data-testid="stMainBlockContainer"],
+div[data-testid="stVerticalBlock"],
+div[data-testid="stVerticalBlockBorderWrapper"],
+.main {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+div[data-testid="stTextInput"] label { display: none !important; }
+
+div[data-testid="stTextInput"] input {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 14px !important;
+  height: 48px !important;
+  border: 1px solid #bdc8d2 !important;
+  border-radius: 8px !important;
+  color: #1a1c1e !important;
+  background: white !important;
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIGZpbGw9J25vbmUnIHN0cm9rZT0nIzAwNjU5MScgc3Ryb2tlLXdpZHRoPScyJyB2aWV3Qm94PScwIDAgMjQgMjQnPjxwYXRoIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcgc3Ryb2tlLWxpbmVqb2luPSdyb3VuZCcgZD0nTTIxIDIxbC02LTZtMi01YTcgNyAwIDExLTE0IDAgNyA3IDAgMDExNCAweicvPjwvc3ZnPg==') !important;
+  background-repeat: no-repeat !important;
+  background-position: 14px center !important;
+  background-size: 20px 20px !important;
+  padding-left: 44px !important;
+  padding-right: 16px !important;
+}
+
+div[data-testid="stTextInput"] input:focus {
+  border-color: #006591 !important;
+  box-shadow: 0 0 0 3px rgba(0,101,145,0.15) !important;
+}
+
+div[data-testid="stTextInput"] input::placeholder {
+  color: #8e98a2 !important;
+  font-family: 'Hanken Grotesk', sans-serif !important;
+  font-size: 14px !important;
+}
+
+.chips-wrapper { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  padding: 4px 8px; border-radius: 4px;
+  display: inline-flex; align-items: center; white-space: nowrap;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  line-height: 16px;
+}
+.chip-neutral    { background: #f3f3f6; color: #3e4851; }
+.chip-korosif    { background: #ffdad6; color: #93000a; }
+.chip-terbakar   { background: #fff0d6; color: #7a4100; }
+.chip-oksidator  { background: #fff0d6; color: #7a4100; }
+.chip-toksik     { background: #f0e6ff; color: #4a007a; }
+.chip-iritan     { background: #ffefd6; color: #6b4e00; }
+.chip-karsinogenik { background: #ffd6e0; color: #8c0032; }
+.chip-eksplosif  { background: #ffdcc8; color: #832200; }
+
+.chem-card {
+  border: 1px solid #e2e2e5; border-radius: 12px;
+  background: white; overflow: hidden; cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;
+  transition: all 150ms ease-in-out !important;
+}
+.chem-card:hover {
+  background: #f9f9fc; border-color: #006591;
+  box-shadow: 0 6px 16px rgba(0,101,145,0.08) !important;
+}
+.card-top-strip { height: 8px; background: linear-gradient(135deg, #006591, #004c6e); }
+.card-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.card-name { font-family: 'Hanken Grotesk', sans-serif; font-weight: 700; font-size: 16px; color: #1a1c1e; margin: 0; }
+.formula-tag {
+  font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 500;
+  color: #006591; background: #f3f3f6; padding: 4px 10px; border-radius: 4px;
+  display: inline-block; letter-spacing: 0.03em;
+}
+.card-divider { border-top: 1px solid #e2e2e5; padding-top: 10px; }
+.label-caps {
+  font-family: 'Hanken Grotesk', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; color: #6e7882; margin-bottom: 2px;
+}
+.card-wujud { font-family: 'Hanken Grotesk', sans-serif; font-size: 14px; color: #1a1c1e; }
+
+button[data-testid="stBaseButton-tertiary"] {
+  font-family: 'Hanken Grotesk', sans-serif !important;
+  font-size: 13px !important; font-weight: 600 !important;
+  color: #006591 !important; background-color: white !important;
+  border: 1px solid #bdc8d2 !important; border-radius: 8px !important;
+  margin-top: 14px !important; padding: 8px 16px !important;
+  transition: all 150ms ease-in-out !important;
+}
+button[data-testid="stBaseButton-tertiary"]:hover {
+  background-color: #006591 !important; border-color: #006591 !important; color: white !important;
+}
+
+.modal-formula {
+  font-family: 'JetBrains Mono', monospace; font-size: 24px;
+  font-weight: 700; color: #006591; letter-spacing: 0.03em;
+}
+.modal-name {
+  font-family: 'Hanken Grotesk', sans-serif; font-size: 20px;
+  font-weight: 600; color: #1a1c1e; margin-top: 4px;
+}
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.stat-cell { background: #f3f3f6; border-radius: 6px; padding: 12px; }
+.stat-label {
+  font-family: 'Hanken Grotesk', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; color: #6e7882; margin-bottom: 4px;
+}
+.stat-value-formula { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 500; color: #006591; }
+.stat-value { font-family: 'Hanken Grotesk', sans-serif; font-size: 14px; color: #1a1c1e; }
+
+.msds-block { border-radius: 0 6px 6px 0; padding: 12px; }
+.msds-block-title {
+  font-family: 'Hanken Grotesk', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px;
+}
+.msds-block-content { font-family: 'Hanken Grotesk', sans-serif; font-size: 14px; line-height: 1.6; color: #1a1c1e; }
+
+.msds-link-button {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 10px; background-color: #006591; color: white !important;
+  padding: 14px 20px; border-radius: 8px; text-decoration: none;
+  font-family: 'Hanken Grotesk', sans-serif; font-size: 14px; font-weight: 600;
+  width: 100%; box-sizing: border-box;
+}
+.msds-link-button:hover { background-color: #004c6e; color: white !important; }
+
+.rumus-bangun-wrapper {
+  background: #f3f3f6; border-radius: 12px; padding: 20px;
+  display: flex; justify-content: center; border: 1px solid #bdc8d2;
+}
+.rumus-bangun-wrapper img { max-height: 140px; object-fit: contain; }
+
+.search-empty { display: flex; flex-direction: column; align-items: center; padding: 80px 20px; text-align: center; }
+.search-empty-icon { font-size: 48px; margin-bottom: 16px; }
+.search-empty-title { font-family: 'Hanken Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: #1a1c1e; margin-bottom: 8px; }
+.search-empty-desc { font-family: 'Hanken Grotesk', sans-serif; font-size: 14px; color: #6e7882; max-width: 300px; line-height: 1.5; }
+
+/* ── BERANDA / PENDAHULUAN CSS ── */
+.beranda-hero {
+  background: linear-gradient(135deg, #001e32 0%, #004c6e 60%, #006591 100%);
+  border-radius: 16px; padding: 48px 40px; text-align: center; margin-bottom: 32px;
+}
+.beranda-hero h1 {
+  font-family: 'Hanken Grotesk', sans-serif; font-size: 28px; font-weight: 700;
+  color: #ffffff; margin: 0 0 8px 0;
+}
+.beranda-hero p {
+  font-family: 'Hanken Grotesk', sans-serif; font-size: 14px;
+  color: rgba(255,255,255,0.85); margin: 0; line-height: 1.6;
+}
+.beranda-hero .badge {
+  display: inline-block; background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3); border-radius: 20px;
+  padding: 4px 14px; font-size: 12px; color: #fff;
+  font-family: 'Hanken Grotesk', sans-serif; font-weight: 600;
+  letter-spacing: 0.06em; margin-bottom: 16px;
+}
+
+.section-title {
+  font-family: 'Hanken Grotesk', sans-serif; font-size: 18px; font-weight: 700;
+  color: #1a1c1e; margin: 0 0 16px 0; padding-bottom: 10px;
+  border-bottom: 2px solid #006591; display: inline-block;
+}
+
+.info-card {
+  background: white; border: 1px solid #e2e2e5; border-radius: 12px;
+  padding: 20px; margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.info-card h3 {
+  font-family: 'Hanken Grotesk', sans-serif; font-size: 15px; font-weight: 700;
+  color: #006591; margin: 0 0 8px 0;
+}
+.info-card p {
+  font-family: 'Hanken Grotesk', sans-serif; font-size: 13px;
+  color: #3e4851; line-height: 1.6; margin: 0;
+}
+
+.signal-box {
+  border-radius: 10px; padding: 16px 20px; margin-bottom: 10px;
+  display: flex; align-items: flex-start; gap: 14px;
+}
+.signal-danger { background: #fff0f0; border: 1px solid #ffc4c4; }
+.signal-warning { background: #fffbf0; border: 1px solid #ffe49c; }
+.signal-badge {
+  font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 13px;
+  padding: 4px 10px; border-radius: 6px; white-space: nowrap; margin-top: 2px;
+}
+.signal-danger .signal-badge { background: #c00; color: #fff; }
+.signal-warning .signal-badge { background: #e67e00; color: #fff; }
+.signal-text { font-family: 'Hanken Grotesk', sans-serif; font-size: 13px; color: #1a1c1e; line-height: 1.5; }
+.signal-text strong { font-weight: 700; }
+
+.phrase-table {
+  width: 100%; border-collapse: collapse; font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 13px; margin-bottom: 20px;
+}
+.phrase-table th {
+  background: #006591; color: #fff; padding: 10px 14px; text-align: left;
+  font-weight: 700; letter-spacing: 0.04em;
+}
+.phrase-table td { padding: 10px 14px; border-bottom: 1px solid #e2e2e5; color: #1a1c1e; vertical-align: top; }
+.phrase-table tr:nth-child(even) td { background: #f9f9fc; }
+.phrase-table .code-cell {
+  font-family: 'JetBrains Mono', monospace; font-weight: 600;
+  color: #006591; white-space: nowrap;
+}
+
+.ghs-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;
+}
+.ghs-card {
+  background: white; border: 1px solid #e2e2e5; border-radius: 10px;
+  padding: 14px 12px; text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04); transition: all 150ms ease;
+}
+.ghs-card:hover { border-color: #006591; box-shadow: 0 4px 12px rgba(0,101,145,0.1); }
+.ghs-card .ghs-icon { font-size: 32px; margin-bottom: 8px; line-height: 1; }
+.ghs-card .ghs-code {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
+  color: #006591; background: #f0f6fa; padding: 2px 8px;
+  border-radius: 4px; display: inline-block; margin-bottom: 6px;
+}
+.ghs-card .ghs-name {
+  font-family: 'Hanken Grotesk', sans-serif; font-size: 12px; font-weight: 700;
+  color: #1a1c1e; margin-bottom: 4px;
+}
+.ghs-card .ghs-desc {
+  font-family: 'Hanken Grotesk', sans-serif; font-size: 11px; color: #6e7882; line-height: 1.4;
+}
+
+.seksi-table {
+  width: 100%; border-collapse: collapse; font-family: 'Hanken Grotesk', sans-serif; font-size: 13px;
+}
+.seksi-table th {
+  background: #001e32; color: #fff; padding: 10px 14px; text-align: left; font-weight: 700;
+}
+.seksi-table td { padding: 10px 14px; border-bottom: 1px solid #e2e2e5; color: #1a1c1e; vertical-align: top; }
+.seksi-table tr:nth-child(even) td { background: #f9f9fc; }
+.seksi-table .no-cell {
+  font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #006591;
+  text-align: center; width: 40px;
+}
+.seksi-table .judul-cell { font-weight: 600; }
+
+.footer-ref {
+  background: #f3f3f6; border-radius: 10px; padding: 14px 18px; margin-top: 32px;
+  font-family: 'Hanken Grotesk', sans-serif; font-size: 12px; color: #6e7882;
+  text-align: center; border: 1px solid #e2e2e5;
+}
+.footer-ref strong { color: #1a1c1e; }
+
+/* Navbar tab styling */
+div[data-testid="stHorizontalBlock"] button[data-testid="stBaseButton-secondary"] {
+  font-family: 'Hanken Grotesk', sans-serif !important;
+  font-size: 14px !important; font-weight: 600 !important;
+}
+</style>
+"""
+
+# ─── LANDING/SEARCH CSS ────────────────────────────────────────────────────────
+LANDING_CSS = """
+<style>
+.stApp { background-color: #001e32 !important; }
+div[data-testid="stAppViewContainer"] {
+  background-color: #001e32 !important;
+  background-image: linear-gradient(rgba(0,30,50,0.55), rgba(0,30,50,0.55)), url('data:image/jpeg;base64,BG_IMAGE_BASE64') !important;
+  background-size: cover !important; background-position: center !important;
+  background-repeat: no-repeat !important; background-attachment: fixed !important;
+}
+div[data-testid="stAppViewBlockContainer"],
+div[data-testid="stMainBlockContainer"] {
+  padding-top: 0 !important; padding-bottom: 0 !important;
+  max-width: 1200px !important; margin: 0 auto !important;
+}
+</style>
+"""
+
+SEARCH_CSS = """
+<style>
+.stApp { background-color: #f9f9fc !important; }
+div[data-testid="stAppViewContainer"] {
+  background-color: #f9f9fc !important;
+  background-image: linear-gradient(rgba(249,249,252,0.9), rgba(249,249,252,0.9)), url('data:image/jpeg;base64,BG_IMAGE_BASE64') !important;
+  background-size: cover !important; background-position: center !important;
+  background-repeat: no-repeat !important; background-attachment: fixed !important;
+}
+div[data-testid="stAppViewBlockContainer"],
+div[data-testid="stMainBlockContainer"] {
+  padding-top: 0 !important; padding-bottom: 40px !important;
+  max-width: 1200px !important; margin: 0 auto !important;
+}
+</style>
+"""
+
+BERANDA_CSS = """
+<style>
+.stApp { background-color: #f9f9fc !important; }
+div[data-testid="stAppViewContainer"] { background-color: #f9f9fc !important; }
+div[data-testid="stAppViewBlockContainer"],
+div[data-testid="stMainBlockContainer"] {
+  padding-top: 20px !important; padding-bottom: 60px !important;
+  max-width: 1100px !important; margin: 0 auto !important;
+}
+</style>
+"""
+
+# ─── MODAL DETAIL ──────────────────────────────────────────────────────────────
+@st.dialog("Detail Zat Kimia", width="large")
+def show_detail(compound_id):
+    compound = next((c for c in compounds_data if c["id"] == compound_id), None)
+    if not compound:
+        st.error("Data tidak ditemukan")
+        return
+
+    st.markdown(
+        f'<div style="margin-bottom:16px">'
+        f'<div class="modal-formula">{compound["formula"]}</div>'
+        f'<div class="modal-name">{compound["name"]}</div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+    rumus = compound.get("rumusBangun", "")
+    if rumus:
+        img_path = os.path.join(BASE_DIR, "static", rumus)
+        img_base64 = get_base64_image(img_path)
+        ext = rumus.split(".")[-1].lower()
+        mime = "image/png" if ext == "png" else "image/jpeg"
+        st.markdown(
+            f'<div style="margin-bottom:16px">'
+            f'<div class="label-caps" style="color:#1a1c1e;margin-bottom:8px">Rumus Bangun</div>'
+            f'<div class="rumus-bangun-wrapper">'
+            f'<img src="data:{mime};base64,{img_base64}" alt="Struktur {compound["name"]}" />'
+            f'</div></div>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown(
+        f'<div style="margin-bottom:16px"><div class="stat-grid">'
+        f'<div class="stat-cell">'
+        f'<div class="stat-label">Rumus Kimia</div>'
+        f'<div class="stat-value-formula">{compound["formula"]}</div>'
+        f'</div>'
+        f'<div class="stat-cell">'
+        f'<div class="stat-label">Warna / Wujud</div>'
+        f'<div class="stat-value">{compound["wujud"]}</div>'
+        f'</div>'
+        f'</div></div>',
+        unsafe_allow_html=True,
+    )
+
+    chips = build_chips_html(compound["hazards"], "11px")
+    st.markdown(
+        f'<div style="margin-bottom:16px">'
+        f'<div class="label-caps" style="color:#1a1c1e;margin-bottom:8px">Sifat Bahaya</div>'
+        f'{chips}</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="label-caps" style="color:#1a1c1e;margin-bottom:12px">'
+        'Keselamatan &amp; Penanganan (MSDS)</div>',
+        unsafe_allow_html=True,
+    )
+
+    msds = compound.get("msds") or {}
+    has_link = bool(msds.get("link"))
+    if has_link:
+        st.markdown(
+            f'<a href="{msds["link"]}" target="_blank" rel="noopener noreferrer"'
+            f' class="msds-link-button" style="margin-bottom:12px">'
+            f'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"'
+            f' stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+            f'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>'
+            f'<polyline points="14 2 14 8 20 8"/>'
+            f'<line x1="16" y1="13" x2="8" y2="13"/>'
+            f'<line x1="16" y1="17" x2="8" y2="17"/></svg>'
+            f'<span>Lihat Dokumen MSDS (PDF)</span>'
+            f'<svg width="16" height="16" viewBox="0 0 24 24" fill="none"'
+            f' stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+            f'<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>'
+            f'<polyline points="15 3 21 3 21 9"/>'
+            f'<line x1="10" y1="14" x2="21" y2="3"/></svg></a>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            '<div style="background:#f3f3f6;border-radius:8px;padding:20px;text-align:center">'
+            '<div style="font-size:14px;color:#6e7882">Data MSDS belum tersedia.</div>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+
+
+# ─── HALAMAN BERANDA ──────────────────────────────────────────────────────────
+def show_beranda():
+    st.markdown(BERANDA_CSS, unsafe_allow_html=True)
+
+    # ── Hero Banner ──
+    st.markdown("""
+    <div class="beranda-hero">
+      <div class="badge">📋 Referensi GHS Rev.9 · Kepmenaker No. 187/MEN/1999</div>
+      <h1>🧪 Pendahuluan: MSDS & Simbol Bahaya Kimia</h1>
+      <p>Pelajari dasar-dasar keselamatan bahan kimia — mulai dari pengertian MSDS, simbol bahaya GHS,<br>
+         kata sinyal, frasa bahaya, hingga 16 seksi wajib dalam lembar data keselamatan bahan.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Apa itu MSDS ──
+    st.markdown('<div class="section-title">📄 Apa itu MSDS / SDS?</div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="info-card">
+      <h3>Material Safety Data Sheet (MSDS) / Safety Data Sheet (SDS)</h3>
+      <p>
+        MSDS atau SDS adalah dokumen resmi yang memuat informasi keselamatan suatu bahan kimia,
+        mulai dari sifat fisik-kimia, bahaya, hingga cara penanganan yang aman. Dokumen ini wajib
+        tersedia di setiap tempat kerja yang menggunakan bahan kimia berbahaya.
+      </p>
+    </div>
+    <div class="info-card">
+      <h3>⚖️ Dasar Hukum di Indonesia</h3>
+      <p>
+        <strong>Kepmenaker No. 187/MEN/1999</strong> tentang Pengendalian Bahan Kimia Berbahaya
+        di Tempat Kerja mewajibkan setiap produsen, importir, dan pengguna bahan kimia berbahaya
+        untuk menyediakan MSDS dan menerapkan label yang sesuai.
+      </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Kata Sinyal ──
+    st.markdown('<div class="section-title">🚦 Kata Sinyal (Signal Word)</div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="signal-box signal-danger">
+      <div class="signal-badge">DANGER</div>
+      <div class="signal-text">
+        <strong>Bahaya Tingkat Tinggi</strong><br>
+        Digunakan untuk bahan kimia yang dapat menyebabkan risiko serius atau fatal.
+        Warna merah — perlu penanganan paling ketat.
+      </div>
+    </div>
+    <div class="signal-box signal-warning">
+      <div class="signal-badge">WARNING</div>
+      <div class="signal-text">
+        <strong>Bahaya Tingkat Lebih Rendah</strong><br>
+        Digunakan untuk bahan kimia dengan risiko lebih rendah namun tetap memerlukan perhatian
+        dan perlindungan yang memadai.
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Frasa Bahaya ──
+    st.markdown('<div class="section-title">🔤 Frasa Bahaya & Pencegahan</div>', unsafe_allow_html=True)
+    st.markdown("""
+    <table class="phrase-table">
+      <thead>
+        <tr><th>Kode</th><th>Jenis</th><th>Keterangan & Contoh</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="code-cell">H-phrase</td>
+          <td><strong>Hazard Statement</strong></td>
+          <td>Mendeskripsikan jenis bahaya bahan kimia.<br>
+              <em>Contoh: H301 – Beracun jika tertelan</em></td>
+        </tr>
+        <tr>
+          <td class="code-cell">P-phrase</td>
+          <td><strong>Precautionary Statement</strong></td>
+          <td>Tindakan pencegahan yang harus dilakukan saat menangani bahan.<br>
+              <em>Contoh: P260 – Jangan menghirup debu/uap</em></td>
+        </tr>
+      </tbody>
+    </table>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Simbol Bahaya GHS ──
+    st.markdown('<div class="section-title">⚠️ Simbol Bahaya GHS (9 Piktogram Standar)</div>', unsafe_allow_html=True)
+    st.markdown("""
+    <p style="font-family:'Hanken Grotesk',sans-serif;font-size:13px;color:#6e7882;margin-bottom:16px">
+      GHS (Globally Harmonized System) menggunakan 9 piktogram standar berbentuk berlian merah-putih
+      untuk mengkomunikasikan bahaya bahan kimia secara internasional.
+    </p>
+    <div class="ghs-grid">
+      <div class="ghs-card">
+        <div class="ghs-icon">💥</div>
+        <div class="ghs-code">GHS01</div>
+        <div class="ghs-name">Eksplosif</div>
+        <div class="ghs-desc">Bahan dapat meledak atau menghasilkan gas eksplosif</div>
+      </div>
+      <div class="ghs-card">
+        <div class="ghs-icon">🔥</div>
+        <div class="ghs-code">GHS02</div>
+        <div class="ghs-name">Mudah Terbakar</div>
+        <div class="ghs-desc">Bahan flammable, piroforik, atau penghasil gas mudah terbakar</div>
+      </div>
+      <div class="ghs-card">
+        <div class="ghs-icon">🔥⭕</div>
+        <div class="ghs-code">GHS03</div>
+        <div class="ghs-name">Oksidator</div>
+        <div class="ghs-desc">Bahan pengoksidasi — dapat memperparah atau memicu kebakaran</div>
+      </div>
+      <div class="ghs-card">
+        <div class="ghs-icon">🫙</div>
+        <div class="ghs-code">GHS04</div>
+        <div class="ghs-name">Gas Bertekanan</div>
+        <div class="ghs-desc">Gas dalam tabung bertekanan — bahaya ledakan bila dipanaskan</div>
+      </div>
+      <div class="ghs-card">
+        <div class="ghs-icon">⚗️</div>
+        <div class="ghs-code">GHS05</div>
+        <div class="ghs-name">Korosif</div>
+        <div class="ghs-desc">Merusak logam, kulit, atau mata — dapat menyebabkan luka bakar kimia</div>
+      </div>
+      <div class="ghs-card">
+        <div class="ghs-icon">☠️</div>
+        <div class="ghs-code">GHS06</div>
+        <div class="ghs-name">Sangat Toksik</div>
+        <div class="ghs-desc">Fatal/sangat beracun jika tertelan, terhirup, atau kontak kulit</div>
+      </div>
+      <div class="ghs-card">
+        <div class="ghs-icon">❗</div>
+        <div class="ghs-code">GHS07</div>
+        <div class="ghs-name">Berbahaya</div>
+        <div class="ghs-desc">Iritasi kulit/mata, toksisitas akut ringan, bahaya lapisan ozon</div>
+      </div>
+      <div class="ghs-card">
+        <div class="ghs-icon">⚕️</div>
+        <div class="ghs-code">GHS08</div>
+        <div class="ghs-name">Bahaya Kesehatan</div>
+        <div class="ghs-desc">Karsinogenik, mutagenik, toksik reproduksi, sensitisasi pernapasan</div>
+      </div>
+      <div class="ghs-card">
+        <div class="ghs-icon">🌿</div>
+        <div class="ghs-code">GHS09</div>
+        <div class="ghs-name">Bahaya Lingkungan</div>
+        <div class="ghs-desc">Beracun bagi organisme akuatik, dampak jangka panjang pada perairan</div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── 16 Seksi MSDS ──
+    st.markdown('<div class="section-title">📑 16 Seksi Wajib MSDS/SDS (GHS Rev.9)</div>', unsafe_allow_html=True)
+    st.markdown("""
+    <table class="seksi-table">
+      <thead>
+        <tr><th style="width:50px">No.</th><th>Judul Seksi</th><th>Isi Singkat</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="no-cell">1</td><td class="judul-cell">Identifikasi Bahan</td><td>Nama produk, kegunaan, nama &amp; kontak produsen/importir</td></tr>
+        <tr><td class="no-cell">2</td><td class="judul-cell">Identifikasi Bahaya</td><td>Klasifikasi GHS, piktogram, kata sinyal, pernyataan bahaya &amp; pencegahan</td></tr>
+        <tr><td class="no-cell">3</td><td class="judul-cell">Komposisi / Informasi Bahan</td><td>Nama kimia, nomor CAS, konsentrasi komponen</td></tr>
+        <tr><td class="no-cell">4</td><td class="judul-cell">Tindakan Pertolongan Pertama</td><td>Prosedur P3K jika terhirup, tertelan, atau kontak kulit/mata</td></tr>
+        <tr><td class="no-cell">5</td><td class="judul-cell">Tindakan Pemadaman Kebakaran</td><td>Media pemadam yang sesuai, APD pemadam, bahaya saat terbakar</td></tr>
+        <tr><td class="no-cell">6</td><td class="judul-cell">Penanggulangan Tumpahan</td><td>Cara membersihkan tumpahan, APD yang diperlukan, pembuangan sisa</td></tr>
+        <tr><td class="no-cell">7</td><td class="judul-cell">Penanganan &amp; Penyimpanan</td><td>Prosedur penanganan aman, syarat penyimpanan (suhu, ventilasi, dll)</td></tr>
+        <tr><td class="no-cell">8</td><td class="judul-cell">Pengendalian Paparan / APD</td><td>NAB (Nilai Ambang Batas), jenis APD yang direkomendasikan</td></tr>
+        <tr><td class="no-cell">9</td><td class="judul-cell">Sifat Fisika &amp; Kimia</td><td>Wujud, warna, bau, titik didih, titik nyala, pH, kelarutan, dll</td></tr>
+        <tr><td class="no-cell">10</td><td class="judul-cell">Stabilitas &amp; Reaktivitas</td><td>Kondisi yang harus dihindari, bahan tidak kompatibel, produk dekomposisi</td></tr>
+        <tr><td class="no-cell">11</td><td class="judul-cell">Informasi Toksikologi</td><td>LD₅₀, LC₅₀, rute paparan, efek akut &amp; kronis pada kesehatan</td></tr>
+        <tr><td class="no-cell">12</td><td class="judul-cell">Informasi Ekologi</td><td>Toksisitas akuatik, persistensi, potensi bioakumulasi</td></tr>
+        <tr><td class="no-cell">13</td><td class="judul-cell">Pembuangan Limbah</td><td>Metode pembuangan limbah sesuai regulasi yang berlaku</td></tr>
+        <tr><td class="no-cell">14</td><td class="judul-cell">Informasi Transportasi</td><td>Nomor UN, kelas bahaya transportasi, kelompok pengepakan (PG)</td></tr>
+        <tr><td class="no-cell">15</td><td class="judul-cell">Informasi Regulasi</td><td>Peraturan nasional/internasional yang mengatur bahan tersebut</td></tr>
+        <tr><td class="no-cell">16</td><td class="judul-cell">Informasi Lain</td><td>Tanggal pembuatan/revisi, referensi, daftar singkatan</td></tr>
+      </tbody>
+    </table>
+    """, unsafe_allow_html=True)
+
+    # ── Footer Referensi ──
+    st.markdown("""
+    <div class="footer-ref">
+      <strong>Referensi:</strong> GHS Rev.9 (UNECE) &nbsp;|&nbsp;
+      Kepmenaker No. 187/MEN/1999 tentang Pengendalian Bahan Kimia Berbahaya di Tempat Kerja
+    </div>
+    """, unsafe_allow_html=True)
+
+
+# ─── MAIN ─────────────────────────────────────────────────────────────────────
+def main():
+    st.markdown(ALL_CSS, unsafe_allow_html=True)
+
+    # Inisialisasi halaman aktif di session state
+    if "active_page" not in st.session_state:
+        st.session_state.active_page = "beranda"
+
+    current_query = st.session_state.get("q", "").strip()
+    is_searching = bool(current_query)
+
+    # ── Navigasi Tab (selalu tampil kecuali di landing kosong) ──
+    # Tampilkan nav tab jika sedang di beranda atau sedang searching
+    if st.session_state.active_page == "beranda" or is_searching:
+        nav_col1, nav_col2, nav_spacer = st.columns([1, 1, 4])
+        with nav_col1:
+            if st.button(
+                "🏠 Beranda",
+                use_container_width=True,
+                type="secondary" if st.session_state.active_page != "beranda" else "primary",
+            ):
+                st.session_state.active_page = "beranda"
+                st.session_state["q"] = ""
+                st.rerun()
+        with nav_col2:
+            if st.button(
+                "🔍 Cari Senyawa",
+                use_container_width=True,
+                type="secondary" if st.session_state.active_page != "search" else "primary",
+            ):
+                st.session_state.active_page = "search"
+                st.rerun()
+
+    # ── Routing Halaman ──
+    if st.session_state.active_page == "beranda" and not is_searching:
+        show_beranda()
+
+    elif st.session_state.active_page == "search" or is_searching:
+        # Update state halaman jika user mengetik di search
+        if is_searching:
+            st.session_state.active_page = "search"
+
+        if not is_searching:
+            # Tampilan halaman search kosong (landing search)
+            st.markdown(LANDING_CSS.replace("BG_IMAGE_BASE64", bg_base64), unsafe_allow_html=True)
+            st.markdown('<div style="height:calc(30vh - 100px)"></div>', unsafe_allow_html=True)
+            st.markdown(
+                '<h1 style="font-family:\'Hanken Grotesk\',sans-serif;font-size:28px;font-weight:700;'
+                'color:#ffffff;margin:0 0 8px 0;text-align:center;text-shadow:0 2px 8px rgba(0,0,0,0.3);">'
+                'Chemical Safety Database</h1>',
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                '<p style="font-family:\'Hanken Grotesk\',sans-serif;font-size:15px;color:rgba(255,255,255,0.85);'
+                'margin:0 0 28px 0;line-height:1.5;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,0.2);">'
+                'Cari informasi zat kimia, sifat bahaya, dan data MSDS</p>',
+                unsafe_allow_html=True,
+            )
+            left_col, center_col, right_col = st.columns([1.2, 2, 1.2])
+            with center_col:
+                st.text_input(
+                    "search",
+                    placeholder="Cari nama zat, rumus, atau sifat bahaya...",
+                    key="q",
+                    label_visibility="collapsed",
+                )
+            st.markdown(
+                '<p style="font-family:\'Hanken Grotesk\',sans-serif;font-size:13px;color:rgba(255,255,255,0.8);'
+                'margin:10px 0 0 0;text-align:center;"><strong style="color:#fff;font-weight:600">'
+                + str(len(compounds_data))
+                + "</strong> zat kimia tersedia</p>",
+                unsafe_allow_html=True,
+            )
+
+        else:
+            # Tampilan hasil pencarian
+            st.markdown(SEARCH_CSS.replace("BG_IMAGE_BASE64", bg_base64), unsafe_allow_html=True)
+            filtered = filter_data(current_query)
+
+            st.markdown(
+                '<h1 style="font-family:\'Hanken Grotesk\',sans-serif;font-size:20px;font-weight:700;'
+                'color:#006591;margin:20px 0 12px 0;text-align:center;">Chemical Safety Database</h1>',
+                unsafe_allow_html=True,
+            )
+
+            left_col, center_col, right_col = st.columns([1.2, 2, 1.2])
+            with center_col:
+                st.text_input(
+                    "search",
+                    placeholder="Cari nama zat, rumus, atau sifat bahaya...",
+                    key="q",
+                    label_visibility="collapsed",
+                )
+
+            st.markdown(
+                '<p style="font-family:\'Hanken Grotesk\',sans-serif;font-size:13px;color:#6e7882;'
+                'margin:8px 0 20px 0;text-align:center;">Ditemukan <strong style="color:#006591;font-weight:600">'
+                + str(len(filtered))
+                + '</strong> dari <strong style="color:#006591;font-weight:600">'
+                + str(len(compounds_data))
+                + "</strong> zat kimia</p>",
+                unsafe_allow_html=True,
+            )
+
+            if not filtered:
+                safe_query = html_mod.escape(current_query)
+                st.markdown(
+                    '<div class="search-empty">'
+                    '<div class="search-empty-icon">🔍</div>'
+                    '<div class="search-empty-title">Tidak ditemukan</div>'
+                    '<div class="search-empty-desc">'
+                    f'Tidak ada zat kimia yang cocok dengan &ldquo;{safe_query}&rdquo;'
+                    '</div></div>',
+                    unsafe_allow_html=True,
+                )
+            else:
+                cols = st.columns(3)
+                for idx, compound in enumerate(filtered):
+                    with cols[idx % 3]:
+                        st.markdown(build_card_html(compound), unsafe_allow_html=True)
+                        if st.button(
+                            "Lihat Detail",
+                            key=f"btn_{compound['id']}",
+                            use_container_width=True,
+                            type="tertiary",
+                        ):
+                            show_detail(compound["id"])
+
+    else:
+        # Default: tampilkan landing page asli jika belum pilih halaman apapun
+        st.markdown(LANDING_CSS.replace("BG_IMAGE_BASE64", bg_base64), unsafe_allow_html=True)
+        st.markdown('<div style="height:calc(50vh - 180px)"></div>', unsafe_allow_html=True)
+        st.markdown(
+            '<h1 style="font-family:\'Hanken Grotesk\',sans-serif;font-size:32px;font-weight:700;'
+            'color:#ffffff;margin:0 0 8px 0;text-align:center;text-shadow:0 2px 8px rgba(0,0,0,0.3);">'
+            'Chemical Safety Database</h1>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            '<p style="font-family:\'Hanken Grotesk\',sans-serif;font-size:15px;color:rgba(255,255,255,0.85);'
+            'margin:0 0 28px 0;line-height:1.5;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,0.2);">'
+            'Cari informasi zat kimia, sifat bahaya, dan data MSDS</p>',
+            unsafe_allow_html=True,
+        )
+        left_col, center_col, right_col = st.columns([1.2, 2, 1.2])
+        with center_col:
+            st.text_input(
+                "search",
+                placeholder="Cari nama zat, rumus, atau sifat bahaya...",
+                key="q",
+                label_visibility="collapsed",
+            )
+        st.markdown(
+            '<p style="font-family:\'Hanken Grotesk\',sans-serif;font-size:13px;color:rgba(255,255,255,0.8);'
+            'margin:10px 0 0 0;text-align:center;"><strong style="color:#fff;font-weight:600">'
+            + str(len(compounds_data))
+            + "</strong> zat kimia tersedia</p>",
+            unsafe_allow_html=True,
+        )
 
 
 if __name__ == "__main__":
