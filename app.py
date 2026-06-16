@@ -80,6 +80,56 @@ def filter_data(query):
         or any(q in h.lower() for h in c["hazards"])
     ]
 
+# ─── TIM PENYUSUN DISPLAY ─────────────────────────────────────────────────────
+def build_tim_html(background_color="transparent", text_color="rgba(255,255,255,0.85)"):
+    """Menampilkan daftar tim penyusun dalam format HTML yang responsive"""
+    return f'''
+    <div style="display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 24px;">
+        <div style="display: inline-block; text-align: left; background: {background_color}; padding: 16px 24px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+            <p style="
+                font-family:'Hanken Grotesk',sans-serif;
+                font-size:12px;
+                color: {text_color};
+                margin:0 0 14px 0;
+                text-align:center;
+                font-weight:700;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+            ">👥 Disusun Oleh</p>
+            <ul style="
+                list-style-type:none;
+                padding:0;
+                margin:0;
+                font-family:'Hanken Grotesk',sans-serif;
+                font-size:13px;
+                color: {text_color};
+                min-width: 300px;
+            ">
+                <li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 16px;">
+                    <span style="flex-grow: 1;">1. Fauziah Hasanah</span>
+                    <span style="font-family:'JetBrains Mono', monospace; font-size:11px; opacity:0.75; white-space: nowrap; text-align: right;">2530614</span>
+                </li>
+                <li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 16px;">
+                    <span style="flex-grow: 1;">2. Nabila Agustin</span>
+                    <span style="font-family:'JetBrains Mono', monospace; font-size:11px; opacity:0.75; white-space: nowrap; text-align: right;">2530641</span>
+                </li>
+                <li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 16px;">
+                    <span style="flex-grow: 1;">3. Sarah Siti Shalsabila</span>
+                    <span style="font-family:'JetBrains Mono', monospace; font-size:11px; opacity:0.75; white-space: nowrap; text-align: right;">2530651</span>
+                </li>
+                <li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 16px;">
+                    <span style="flex-grow: 1;">4. Sirvi Fauziah</span>
+                    <span style="font-family:'JetBrains Mono', monospace; font-size:11px; opacity:0.75; white-space: nowrap; text-align: right;">2530653</span>
+                </li>
+                <li style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
+                    <span style="flex-grow: 1;">5. Sukma Widad Alhana</span>
+                    <span style="font-family:'JetBrains Mono', monospace; font-size:11px; opacity:0.75; white-space: nowrap; text-align: right;">2530655</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+    '''
+
 # ─── CSS GLOBAL ────────────────────────────────────────────────────────────────
 ALL_CSS = """
 <style>
@@ -119,7 +169,7 @@ div[data-testid="stTextInput"] input {
   border-radius: 8px !important;
   color: #1a1c1e !important;
   background: white !important;
-  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIGZpbGw9J25vbmUnIHN0cm9rZT0nIzAwNjU5MScgc3Ryb2tlLXdpZHRoPScyJyB2aWV3Qm94PScwIDAgMjQgMjQnPjxwYXRoIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcgc3Ryb2tlLWxpbmVqb2luPSdyb3VuZCcgZD0nTTIxIDIxbC02LTZtMi01YTcgNyAwIDExLTE0IDAgNyA3IDAgMDExNCAweicvPjwvc3ZnPg==') !important;
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIGZpbGw9J25vbmUnIHN0cm9rZT0nIzAwNjU5MScgc3Ryb2tlLXdpZHRoPScyJyB2aWV3Qm94PScwIDAgMjQgMjQnPjxwYXRoIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcgc3Ryb2tlLWxpbmVqb2luPSdyb3VuZCcgZD0nTTIxIDIxbC02LTZtMi01YTcgNyAwIDExLTE0IDAgNyA3IDAgMDExNDAweicvPjwvc3ZnPg==') !important;
   background-repeat: no-repeat !important;
   background-position: 14px center !important;
   background-size: 20px 20px !important;
@@ -513,7 +563,6 @@ def show_detail(compound_id):
         )
 
 
-
 # ─── HALAMAN BERANDA ──────────────────────────────────────────────────────────
 def show_beranda():
     st.markdown(BERANDA_CSS, unsafe_allow_html=True)
@@ -698,7 +747,6 @@ def show_beranda():
     st.markdown("<br>", unsafe_allow_html=True)
 
     # ── Tim Penyusun ──
-    # ↓↓↓ PERUBAHAN 1: Section daftar nama ditambahkan di sini ↓↓↓
     st.markdown('<div class="section-title">👥 Tim Penyusun</div>', unsafe_allow_html=True)
     st.markdown("""
     <div class="info-card">
@@ -756,10 +804,6 @@ def main():
     is_searching = bool(current_query)
 
     # ── Navigasi Tab ──
-    # ↓↓↓ PERUBAHAN 2: kondisi diperluas agar tombol "Beranda" tetap muncul
-    #     di halaman search meski belum mengetik (sebelumnya hanya muncul saat
-    #     active_page == "beranda" OR is_searching, sehingga halaman search kosong
-    #     kehilangan tombol navigasi balik ke Beranda) ↓↓↓
     if st.session_state.active_page in ("beranda", "search") or is_searching:
         nav_col1, nav_col2, nav_spacer = st.columns([1, 1, 4])
         with nav_col1:
@@ -813,6 +857,8 @@ def main():
                     key="q",
                     label_visibility="collapsed",
                 )
+            
+            # Tampilkan jumlah zat dan daftar tim
             st.markdown(
                 '<p style="font-family:\'Hanken Grotesk\',sans-serif;font-size:13px;color:rgba(255,255,255,0.8);'
                 'margin:10px 0 0 0;text-align:center;"><strong style="color:#fff;font-weight:600">'
@@ -820,6 +866,9 @@ def main():
                 + "</strong> zat kimia tersedia</p>",
                 unsafe_allow_html=True,
             )
+            
+            # Tambahkan daftar tim penyusun dengan warna transparan
+            st.markdown(build_tim_html(background_color="rgba(0,0,0,0.15)", text_color="rgba(255,255,255,0.9)"), unsafe_allow_html=True)
 
         else:
             # Tampilan hasil pencarian
@@ -906,6 +955,9 @@ def main():
             + "</strong> zat kimia tersedia</p>",
             unsafe_allow_html=True,
         )
+        
+        # Tambahkan daftar tim penyusun di landing page juga
+        st.markdown(build_tim_html(background_color="rgba(0,0,0,0.15)", text_color="rgba(255,255,255,0.9)"), unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
