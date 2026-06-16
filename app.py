@@ -608,6 +608,8 @@ def main():
                     ):
                         show_detail(compound["id"])
 
+https://claude.ai/public/artifacts/0ceafd1d-81c0-41bb-99ff-07c11ed5cd9c
+
 
 
 if __name__ == "__main__":
