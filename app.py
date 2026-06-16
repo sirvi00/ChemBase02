@@ -511,42 +511,7 @@ def show_detail(compound_id):
             '</div>',
             unsafe_allow_html=True,
         )
-'<div style="display: inline-block; text-align: left; margin-top: 15px; width: 330px;">'
-                '<p style="'
-                "font-family:'Hanken Grotesk',sans-serif;"
-                'font-size:15px;color:rgba(255,255,255,0.85);'
-                'margin:0;text-align:center;padding-left:10px;'
-                '">Disusun oleh:</p>'
-                '<ul style="'
-                "list-style-type:none;padding:0;margin:8px 0 0 0;"
-                "font-family:'Hanken Grotesk',sans-serif;"
-                'font-size:16px;color:rgba(255,255,255,0.75);'
-                '">'
-                '<li style="display: flex; justify-content: space-between; margin-bottom: 6px;">'
-                '<span>1. Fauziah Hasanah</span>'
-                '<span style="font-family:\'JetBrains Mono\', monospace; font-size:14px; opacity:0.85;">(2530614)</span>'
-                '</li>'
-                '<li style="display: flex; justify-content: space-between; margin-bottom: 6px;">'
-                '<span>2. Nabila Agustin</span>'
-                '<span style="font-family:\'JetBrains Mono\', monospace; font-size:14px; opacity:0.85;">(2530641)</span>'
-                '</li>'
-                '<li style="display: flex; justify-content: space-between; margin-bottom: 6px;">'
-                '<span>3. Sarah Siti Shalsabila</span>'
-                '<span style="font-family:\'JetBrains Mono\', monospace; font-size:14px; opacity:0.85;">(2530651)</span>'
-                '</li>'
-                '<li style="display: flex; justify-content: space-between; margin-bottom: 6px;">'
-                '<span>4. Sirvi Fauziah</span>'
-                '<span style="font-family:\'JetBrains Mono\', monospace; font-size:14px; opacity:0.85;">(2530653)</span>'
-                '</li>'
-                '<li style="display: flex; justify-content: space-between; margin-bottom: 6px;">'
-                '<span>5. Sukma Widad Alhana</span>'
-                '<span style="font-family:\'JetBrains Mono\', monospace; font-size:14px; opacity:0.85;">(2530655)</span>'
-                '</li>'
-                '</ul>'
-                '</div>'
-                '</div>'
-            )
-            st.markdown(html_content, unsafe_allow_html=True)
+
 
 
 # ─── HALAMAN BERANDA ──────────────────────────────────────────────────────────
